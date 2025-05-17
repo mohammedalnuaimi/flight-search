@@ -4,7 +4,10 @@ import { logger } from '../utils/logger.js';
 import { flightSearchSchema, createFlightSchema, flightIdSchema } from '../validations/flightValidation.js';
 
 const CO2_EMISSIONS_FACTOR = 0.115;
-const calculateCO2Emissions = (distanceKm) => distanceKm * CO2_EMISSIONS_FACTOR;
+
+export function calculateCO2Emissions(distanceKm) {
+  return distanceKm * CO2_EMISSIONS_FACTOR;
+}
 
 export async function getFlights(search) {
   try {
@@ -86,9 +89,17 @@ export async function getFlights(search) {
       logger.info('No flights found for the given search criteria');
       return [];
     }
+    
+    // Format dates to ISO string
+    const formattedFlights = result.rows.map(flight => ({
+      ...flight,
+      departure_time: new Date(flight.departure_time).toISOString(),
+      arrival_time: new Date(flight.arrival_time).toISOString()
+    }));
+
     // Cache the result for 5 minutes
-    await redisClient.setEx(cacheKey, 300, JSON.stringify(result.rows));
-    return result.rows;
+    await redisClient.setEx(cacheKey, 300, JSON.stringify(formattedFlights));
+    return formattedFlights;
   } catch (error) {
     logger.error('Error fetching flights:', error);
     const isDev = process.env.NODE_ENV !== 'production';
@@ -106,7 +117,14 @@ export async function getFlightById(id) {
     if (result.rows.length === 0) {
       throw new Error('Flight not found');
     }
-    return result.rows[0];
+    
+    // Format dates to ISO string
+    const flight = result.rows[0];
+    return {
+      ...flight,
+      departure_time: new Date(flight.departure_time).toISOString(),
+      arrival_time: new Date(flight.arrival_time).toISOString()
+    };
   } catch (error) {
     logger.error('Error fetching flight:', error);
     const isDev = process.env.NODE_ENV !== 'production';

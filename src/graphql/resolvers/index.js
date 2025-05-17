@@ -1,12 +1,5 @@
 import * as flightService from "../../services/flightService.js";
 
-// CO2 emissions calculation (kg per passenger per km)
-const CO2_EMISSIONS_FACTOR = 0.115;
-
-const calculateCO2Emissions = (distanceKm) => {
-  return distanceKm * CO2_EMISSIONS_FACTOR;
-};
-
 const resolvers = {
   Flight: {
     flightNumber: (parent) => parent.flight_number,
@@ -15,7 +8,7 @@ const resolvers = {
     departureTime: (parent) => parent.departure_time,
     arrivalTime: (parent) => parent.arrival_time,
     distanceKm: (parent) => parent.distance_km,
-    co2Emissions: (parent) => calculateCO2Emissions(parent.distance_km),
+    co2Emissions: (parent) => flightService.calculateCO2Emissions(parent.distance_km),
   },
   Query: {
     flights: async (_, { search }) => {
